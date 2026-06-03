@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ゴルフチーム戦">
+<title>ゴルフチーム戦スコア</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:#f2f2f7;color:#1c1c1e;min-height:100vh;padding-bottom:40px;}
+.header{background:#fff;padding:52px 20px 14px;border-bottom:0.5px solid rgba(0,0,0,0.15);position:sticky;top:0;z-index:100;}
+.header h1{font-size:20px;font-weight:700;}
+.header .sub{font-size:13px;color:#8e8e93;margin-top:2px;}
+.content{padding:16px;}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;}
+.card-title{font-size:13px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;}
+.field{margin-bottom:12px;}
+.field label{font-size:13px;color:#8e8e93;display:block;margin-bottom:4px;}
+.field select,.field input{width:100%;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.12);background:#f2f2f7;color:#1c1c1e;-webkit-appearance:none;appearance:none;}
+.btn-primary{width:100%;background:#007aff;color:#fff;border:none;border-radius:14px;padding:16px;font-size:17px;font-weight:600;cursor:pointer;-webkit-appearance:none;}
+.btn-primary:active{opacity:0.8;}
+.btn-sm{background:#e5e5ea;color:#1c1c1e;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;-webkit-appearance:none;}
+.btn-sm:active{opacity:0.7;}
+.team-setup-block{border:1px solid rgba(0,0,0,0.1);border-radius:12px;padding:12px;margin-bottom:12px;}
+.team-dot{width:12px;height:12px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.tab-bar{display:flex;background:#fff;border-bottom:0.5px solid rgba(0,0,0,0.1);position:sticky;top:88px;z-index:99;overflow-x:auto;}
+.tab-btn{flex:1;padding:12px 8px;font-size:13px;font-weight:500;color:#8e8e93;border:none;background:none;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;}
+.tab-btn.active{color:#007aff;border-bottom-color:#007aff;}
+.score-table{width:100%;border-collapse:collapse;font-size:14px;}
+.score-table th{background:#f2f2f7;color:#8e8e93;font-weight:500;padding:8px 6px;text-align:center;border-bottom:0.5px solid rgba(0,0,0,0.1);}
+.score-table th:first-child{text-align:left;padding-left:0;}
+.score-table td{padding:7px 6px;text-align:center;border-bottom:0.5px solid rgba(0,0,0,0.06);}
+.score-table td:first-child{text-align:left;padding-left:0;font-size:13px;}
+.score-table tr:last-child td{border-bottom:none;}
+.sinput{width:58px;border:1px solid rgba(0,0,0,0.15);border-radius:8px;text-align:center;font-size:15px;padding:5px 2px;background:#fff;color:#1c1c1e;-webkit-appearance:none;}
+.sinput:focus{outline:none;border-color:#007aff;}
+.sinput.filled{background:#f0f8ff;border-color:#b5d4f4;}
+.progress-bar{height:5px;border-radius:3px;background:#e5e5ea;margin:8px 0;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.3s;}
+.half-badge{font-size:11px;padding:2px 8px;border-radius:8px;font-weight:500;display:inline-block;}
+.in-badge{background:#e5f0ff;color:#185fa5;}
+.out-badge{background:#e1f5ee;color:#0f6e56;}
+.rank-row{display:flex;align-items:center;gap:10px;background:#f2f2f7;border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+.rank-num{font-size:20px;font-weight:700;min-width:28px;color:#8e8e93;}
+.rank-num.gold{color:#ba7517;}
+.rank-num.silver{color:#8e8e93;}
+.rank-num.bronze{color:#8a4a1a;}
+.rank-name{flex:1;font-weight:600;font-size:15px;}
+.rank-score{font-size:20px;font-weight:700;}
+.rank-sub{font-size:11px;color:#8e8e93;}
+.team-avg-big{font-size:26px;font-weight:700;}
+.hidden{display:none;}
+.member-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.member-row input[type=text]{flex:1;font-size:15px;padding:8px 10px;border-radius:10px;border:1px solid rgba(0,0,0,0.12);background:#f2f2f7;color:#1c1c1e;}
+.section-title{font-size:15px;font-weight:600;margin-bottom:10px;color:#1c1c1e;}
+.empty-msg{text-align:center;color:#8e8e93;font-size:14px;padding:40px 0;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⛳ ゴルフチーム戦</h1>
+  <div class="sub" id="courseSubtitle"></div>
+</div>
+
+<!-- セットアップ -->
+<div id="setupPanel" class="content">
+  <div class="card">
+    <div class="card-title">基本設定</div>
+    <div class="field"><label>コース名（任意）</label><input type="text" id="courseName" placeholder="例：〇〇ゴルフクラブ" /></div>
+    <div class="field"><label>チーム数</label>
+      <select id="teamCount">
+        <option value="2">2チーム</option><option value="3">3チーム</option>
+        <option value="4" selected>4チーム</option><option value="5">5チーム</option><option value="6">6チーム</option>
+      </select>
+    </div>
+    <button class="btn-primary" id="goSetupBtn">チームを設定する</button>
+  </div>
+</div>
+
+<!-- チーム設定 -->
+<div id="teamSetupPanel" class="hidden">
+  <div class="content">
+    <div class="card">
+      <div class="card-title">チーム・メンバー設定</div>
+      <div id="teamInputs"></div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="btn-primary" id="startBtn" style="flex:1;">ラウンド開始</button>
+        <button class="btn-sm" id="backSetupBtn">戻る</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ラウンド画面 -->
+<div id="roundPanel" class="hidden">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-score" data-tab="score">スコア入力</button>
+    <button class="tab-btn" id="tab-team" data-tab="team">チームランキング</button>
+    <button class="tab-btn" id="tab-ind" data-tab="ind">個人ランキング</button>
+  </div>
+  <div class="content">
+    <div id="view-score"></div>
+    <div id="view-team" class="hidden"></div>
+    <div id="view-ind" class="hidden"></div>
+    <button class="btn-sm" id="resetBtn" style="width:100%;margin-top:8px;">⟳ リセット</button>
+  </div>
+</div>
+
+<script>
+var COLORS=['#007aff','#34c759','#ff2d55','#ff9500','#af52de','#ff3b30'];
+var teams=[];
+
+function $(id){return document.getElementById(id);}
+
+function init(){
+  $('goSetupBtn').addEventListener('click',goSetup);
+  $('startBtn').addEventListener('click',startRound);
+  $('backSetupBtn').addEventListener('click',function(){
+    $('teamSetupPanel').classList.add('hidden');
+    $('setupPanel').classList.remove('hidden');
+  });
+  $('resetBtn').addEventListener('click',function(){
+    $('roundPanel').classList.add('hidden');
+    $('setupPanel').classList.remove('hidden');
+  });
+  document.querySelectorAll('.tab-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){showTab(this.dataset.tab);});
+  });
+}
+
+function goSetup(){
+  var tc=parseInt($('teamCount').value);
+  var tnames=['Aチーム','Bチーム','Cチーム','Dチーム','Eチーム','Fチーム'];
+  var mnames=[['田中','鈴木','佐藤','山田'],['伊藤','渡辺','中村','小林'],['加藤','吉田','山口','松本'],['井上','木村','林','清水'],['橋本','石川','前田','藤田'],['岡田','後藤','長谷川','村上']];
+  teams=[];
+  for(var i=0;i<tc;i++){
+    var members=[];
+    for(var j=0;j<4;j++) members.push({name:(mnames[i]||[])[j]||'メンバー'+(j+1),inScore:'',outScore:''});
+    teams.push({name:tnames[i],color:COLORS[i],memberCount:4,members:members});
+  }
+  renderTeamInputs();
+  $('setupPanel').classList.add('hidden');
+  $('teamSetupPanel').classList.remove('hidden');
+}
+
+function renderTeamInputs(){
+  var html='';
+  for(var i=0;i<teams.length;i++){
+    var t=teams[i];
+    html+='<div class="team-setup-block">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+    html+='<span class="team-dot" style="background:'+t.color+';"></span>';
+    html+='<input type="text" class="tname" data-ti="'+i+'" value="'+t.name+'" style="font-size:15px;font-weight:600;flex:1;padding:6px 8px;border-radius:8px;border:1px solid rgba(0,0,0,0.12);background:#f2f2f7;" />';
+    html+='</div>';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+    html+='<span style="font-size:13px;color:#8e8e93;">人数</span>';
+    html+='<select class="mc-sel" data-ti="'+i+'" style="font-size:14px;padding:6px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.12);background:#f2f2f7;">';
+    for(var m=1;m<=8;m++) html+='<option value="'+m+'"'+(t.memberCount===m?' selected':'')+'>'+m+'人</option>';
+    html+='</select></div>';
+    html+='<div class="member-list-'+i+'">';
+    for(var j=0;j<t.memberCount;j++){
+      var mem=t.members[j]||{name:'メンバー'+(j+1)};
+      html+='<div class="member-row"><span style="font-size:12px;color:#8e8e93;width:56px;">'+
+        (j+1)+'人目</span>';
+      html+='<input type="text" class="mname" data-ti="'+i+'" data-mi="'+j+'" value="'+mem.name+'" /></div>';
+    }
+    html+='</div></div>';
+  }
+  $('teamInputs').innerHTML=html;
+  document.querySelectorAll('.mc-sel').forEach(function(sel){
+    sel.addEventListener('change',function(){changeMC(parseInt(this.dataset.ti),parseInt(this.value));});
+  });
+}
+
+function changeMC(ti,mc){
+  syncSetupNames();
+  while(teams[ti].members.length<mc) teams[ti].members.push({name:'メンバー'+(teams[ti].members.length+1),inScore:'',outScore:''});
+  teams[ti].memberCount=mc;
+  renderTeamInputs();
+}
+
+function syncSetupNames(){
+  document.querySelectorAll('.tname').forEach(function(el){teams[parseInt(el.dataset.ti)].name=el.value;});
+  document.querySelectorAll('.mname').forEach(function(el){
+    var m=teams[parseInt(el.dataset.ti)].members[parseInt(el.dataset.mi)];
+    if(m) m.name=el.value;
+  });
+}
+
+function startRound(){
+  syncSetupNames();
+  var course=$('courseName').value;
+  $('courseSubtitle').textContent=course||'';
+  for(var i=0;i<teams.length;i++)
+    for(var j=0;j<teams[i].memberCount;j++){
+      if(!teams[i].members[j]) teams[i].members[j]={name:'M'+(j+1),inScore:'',outScore:''};
+      teams[i].members[j].inScore=''; teams[i].members[j].outScore='';
+    }
+  $('teamSetupPanel').classList.add('hidden');
+  $('roundPanel').classList.remove('hidden');
+  showTab('score');
+}
+
+function showTab(tab){
+  ['score','team','ind'].forEach(function(t){
+    $('view-'+t).classList.toggle('hidden',t!==tab);
+    $('tab-'+t).classList.toggle('active',t===tab);
+  });
+  if(tab==='score') renderScoreCards();
+  if(tab==='team') renderTeamRank();
+  if(tab==='ind') renderIndRank();
+}
+
+function memberTotal(mem){
+  var i=parseFloat(mem.inScore),o=parseFloat(mem.outScore);
+  var hi=!isNaN(i)&&i>0,ho=!isNaN(o)&&o>0;
+  if(!hi&&!ho) return null;
+  return (hi?i:0)+(ho?o:0);
+}
+
+function teamAvg(team){
+  var scores=[];
+  for(var j=0;j<team.memberCount;j++){
+    var t=memberTotal(team.members[j]||{});
+    if(t!==null) scores.push(t);
+  }
+  if(!scores.length) return null;
+  return Math.round(scores.reduce(function(a,b){return a+b;})*100/scores.length)/100;
+}
+
+function halfAvg(team,half){
+  var scores=[];
+  for(var j=0;j<team.memberCount;j++){
+    var m=team.members[j]||{};
+    var s=parseFloat(half==='in'?m.inScore:m.outScore);
+    if(!isNaN(s)&&s>0) scores.push(s);
+  }
+  if(!scores.length) return null;
+  return Math.round(scores.reduce(function(a,b){return a+b;})*100/scores.length)/100;
+}
+
+function inputCount(team){
+  var c=0;
+  for(var j=0;j<team.memberCount;j++){if(memberTotal(team.members[j]||{})!==null)c++;}
+  return c;
+}
+
+function renderScoreCards(){
+  var html='';
+  for(var i=0;i<teams.length;i++){
+    var t=teams[i];
+    var avg=teamAvg(t);
+    var inA=halfAvg(t,'in'),outA=halfAvg(t,'out');
+    var filled=inputCount(t);
+    var pct=Math.round(filled/t.memberCount*100);
+    html+='<div class="card" style="border-left:4px solid '+t.color+';">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    html+='<div style="display:flex;align-items:center;gap:8px;">';
+    html+='<span class="team-dot" style="background:'+t.color+';"></span>';
+    html+='<span style="font-size:16px;font-weight:600;">'+t.name+'</span>';
+    html+='<span style="font-size:12px;color:#8e8e93;">'+filled+'/'+t.memberCount+'人</span>';
+    html+='</div>';
+    html+='<div style="text-align:right;">';
+    html+='<div style="font-size:11px;color:#8e8e93;">平均スコア</div>';
+    html+='<div class="team-avg-big" id="tavg-'+i+'">'+(avg!==null?avg.toFixed(2):'-')+'</div>';
+    html+='</div></div>';
+    html+='<div class="progress-bar"><div class="progress-fill" id="tprog-'+i+'" style="width:'+pct+'%;background:'+t.color+';"></div></div>';
+    html+='<div style="display:flex;gap:8px;margin:8px 0;">';
+    html+='<span class="half-badge in-badge" id="tinbadge-'+i+'">IN: '+(inA!==null?inA.toFixed(2):'-')+'</span>';
+    html+='<span class="half-badge out-badge" id="toutbadge-'+i+'">OUT: '+(outA!==null?outA.toFixed(2):'-')+'</span>';
+    html+='</div>';
+    html+='<table class="score-table"><thead><tr>';
+    html+='<th>メンバー</th><th>IN(前半)</th><th>OUT(後半)</th><th>合計</th></tr></thead><tbody>';
+    for(var j=0;j<t.memberCount;j++){
+      var mem=t.members[j]||{name:'',inScore:'',outScore:''};
+      var tot=memberTotal(mem);
+      html+='<tr>';
+      html+='<td>'+mem.name+'</td>';
+      html+='<td><input type="number" class="sinput'+(mem.inScore?' filled':'')+'" min="30" max="80" value="'+mem.inScore+'" placeholder="-"'
+        +' data-ti="'+i+'" data-mi="'+j+'" data-half="in" /></td>';
+      html+='<td><input type="number" class="sinput'+(mem.outScore?' filled':'')+'" min="30" max="80" value="'+mem.outScore+'" placeholder="-"'
+        +' data-ti="'+i+'" data-mi="'+j+'" data-half="out" /></td>';
+      html+='<td style="font-weight:600;" id="mtot-'+i+'-'+j+'">'+(tot!==null?tot:'-')+'</td>';
+      html+='</tr>';
+    }
+    html+='</tbody></table></div>';
+  }
+  $('view-score').innerHTML=html;
+  document.querySelectorAll('.sinput').forEach(function(inp){
+    inp.addEventListener('input',function(){
+      var ti=parseInt(this.dataset.ti),mi=parseInt(this.dataset.mi),half=this.dataset.half;
+      var val=this.value;
+      teams[ti].members[mi][half==='in'?'inScore':'outScore']=val;
+      this.classList.toggle('filled',val!=='');
+      var tot=memberTotal(teams[ti].members[mi]);
+      var totEl=$('mtot-'+ti+'-'+mi);
+      if(totEl) totEl.textContent=tot!==null?tot:'-';
+      var avg=teamAvg(teams[ti]);
+      var inA=halfAvg(teams[ti],'in'),outA=halfAvg(teams[ti],'out');
+      var avgEl=$('tavg-'+ti);if(avgEl) avgEl.textContent=avg!==null?avg.toFixed(2):'-';
+      var filled=inputCount(teams[ti]);
+      var pct=Math.round(filled/teams[ti].memberCount*100);
+      var prog=$('tprog-'+ti);if(prog) prog.style.width=pct+'%';
+      var ib=$('tinbadge-'+ti);if(ib) ib.textContent='IN: '+(inA!==null?inA.toFixed(2):'-');
+      var ob=$('toutbadge-'+ti);if(ob) ob.textContent='OUT: '+(outA!==null?outA.toFixed(2):'-');
+    });
+  });
+}
+
+function renderTeamRank(){
+  var ranked=teams.map(function(t){
+    return {t:t,avg:teamAvg(t),inA:halfAvg(t,'in'),outA:halfAvg(t,'out')};
+  }).filter(function(x){return x.avg!==null;}).sort(function(a,b){return a.avg-b.avg;});
+  var medals=['gold','silver','bronze'];
+  var html='';
+  if(!ranked.length){html='<div class="empty-msg">まだスコアが入力されていません。</div>';}
+  for(var i=0;i<ranked.length;i++){
+    var r=ranked[i];
+    html+='<div class="rank-row">';
+    html+='<span class="rank-num '+(medals[i]||'')+'">'+(i+1)+'</span>';
+    html+='<span class="team-dot" style="background:'+r.t.color+';"></span>';
+    html+='<div style="flex:1;">';
+    html+='<div class="rank-name">'+r.t.name+'</div>';
+    html+='<div style="display:flex;gap:6px;margin-top:3px;">';
+    html+='<span class="half-badge in-badge">IN: '+(r.inA!==null?r.inA.toFixed(2):'-')+'</span>';
+    html+='<span class="half-badge out-badge">OUT: '+(r.outA!==null?r.outA.toFixed(2):'-')+'</span>';
+    html+='</div></div>';
+    html+='<div style="text-align:right;"><div class="rank-score">'+r.avg.toFixed(2)+'</div>';
+    html+='<div class="rank-sub">平均スコア</div></div></div>';
+  }
+  $('view-team').innerHTML=html;
+}
+
+function renderIndRank(){
+  var all=[];
+  for(var i=0;i<teams.length;i++){
+    for(var j=0;j<teams[i].memberCount;j++){
+      var m=teams[i].members[j]||{};
+      var tot=memberTotal(m);
+      if(tot!==null){
+        var ins=parseFloat(m.inScore),outs=parseFloat(m.outScore);
+        all.push({name:m.name,team:teams[i],tot:tot,
+          inScore:(!isNaN(ins)&&ins>0)?ins:null,
+          outScore:(!isNaN(outs)&&outs>0)?outs:null});
+      }
+    }
+  }
+  all.sort(function(a,b){return a.tot-b.tot;});
+  var medals=['gold','silver','bronze'];
+  var html='';
+  if(!all.length){html='<div class="empty-msg">まだスコアが入力されていません。</div>';}
+  for(var i=0;i<all.length;i++){
+    var p=all[i];
+    html+='<div class="rank-row">';
+    html+='<span class="rank-num '+(medals[i]||'')+'">'+(i+1)+'</span>';
+    html+='<span class="team-dot" style="background:'+p.team.color+';"></span>';
+    html+='<div style="flex:1;">';
+    html+='<div class="rank-name">'+p.name+'</div>';
+    html+='<div style="display:flex;gap:6px;margin-top:3px;align-items:center;">';
+    html+='<span class="half-badge in-badge">IN: '+(p.inScore!==null?p.inScore:'-')+'</span>';
+    html+='<span class="half-badge out-badge">OUT: '+(p.outScore!==null?p.outScore:'-')+'</span>';
+    html+='<span style="font-size:11px;color:'+p.team.color+';font-weight:500;">'+p.team.name+'</span>';
+    html+='</div></div>';
+    html+='<div style="text-align:right;"><div class="rank-score">'+p.tot+'</div>';
+    html+='<div class="rank-sub">合計スコア</div></div></div>';
+  }
+  $('view-ind').innerHTML=html;
+}
+
+window.addEventListener('load',init);
+</script>
+</body>
+</html>
